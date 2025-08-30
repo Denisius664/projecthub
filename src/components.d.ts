@@ -15,6 +15,7 @@ declare module 'vue' {
     ProjectSettings: typeof import('./components/ProjectSettings.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TestComponent: typeof import('./components/TestComponent.vue')['default']
     UserProfile: typeof import('./components/UserProfile.vue')['default']
   }
 }
