@@ -18,7 +18,7 @@
                             <v-card-title class="text-h6">Предметная область</v-card-title>
                             <v-divider />
                             <v-card-text style="max-height: 50vh;" class="pa-0 overflow-auto">
-                                <v-treeview v-model="selectedSubjectArea" :items="subjectAreas" item-value="id"
+                                <v-treeview v-model="selectedSubjectArea" :items="subjectAreasTree" item-value="id"
                                     select-strategy="single-independent" selectable open-all open-on-click class="py-2" />
                             </v-card-text>
                         </v-card>
@@ -35,7 +35,10 @@
 </template>
   
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue'
+import type { ProjectCreate, SubjectAreaRead } from '@/api-client/types'
+import { createProject as apiCreateProject } from '@/api-client/projects'
+import { getSubjectAreas } from '@/api-client/subjectAreas'
 
 const projectName = ref('');
 const projectTags = ref([]);
@@ -44,35 +47,64 @@ const selectedSubjectArea = ref([]);
 
 const availableTags = ['analytics', 'research', 'machine learning', 'education', 'development'];
 
-const subjectAreas = [
-    {
-        id: 1,
-        title: 'Technology',
-        children: [
-            {
-                id: 2, title: 'Artificial Intelligence', children: [
-                    { id: 3, title: 'Machine Learning' },
-                    { id: 4, title: 'Deep Learning' }
-                ]
-            },
-        ],
-    },
-    {
-        id: 5,
-        title: 'Education',
-        children: [
-            { id: 6, title: 'Higher Education' },
-            { id: 7, title: 'K-12' }
-        ],
-    },
-];
+type TreeNode = {
+  id: number;
+  title: string;
+  children?: TreeNode[];
+};
 
-function cancel() {
-    // Очистка формы или возврат назад
+const subjectAreas = ref<SubjectAreaRead[]>([])
+
+// Преобразование subjectAreas к формату для v-treeview
+function toTree(items: SubjectAreaRead[], parentId: number | null = null): TreeNode[] {
+  return items
+    .filter(area => area.parent_id === parentId)
+    .map(area => ({
+      id: area.id,
+      title: area.name,
+      children: toTree(items, area.id),
+    }))
 }
 
-function createProject() {
-    // Логика создания проекта
+const subjectAreasTree = ref<TreeNode[]>([])
+onMounted(() => {
+  getSubjectAreas(0, 100).then(list => {
+    subjectAreas.value = list
+    subjectAreasTree.value = toTree(list)
+  })
+})
+
+function cancel() {
+  // Очистка формы
+  projectName.value = ''
+  projectTags.value = []
+  projectDescription.value = ''
+  selectedSubjectArea.value = []
+}
+
+async function createProject() {
+  if (!projectName.value || selectedSubjectArea.value.length === 0) {
+    alert('Заполните все обязательные поля!')
+    return
+  }
+
+  const data: ProjectCreate = {
+    title: projectName.value,
+    description: projectDescription.value,
+    status: 'в работе',
+    keywords: projectTags.value,
+    subject_area_id: selectedSubjectArea.value[0], // id выбранной области
+    is_public: true,
+  }
+
+  try {
+    const created = await apiCreateProject(data)
+    alert('Проект успешно создан: ' + created.title)
+    cancel()
+  } catch (e) {
+    alert('Ошибка при создании проекта')
+    console.error(e)
+  }
 }
 </script>
   

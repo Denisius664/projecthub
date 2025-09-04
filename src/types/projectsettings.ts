@@ -1,4 +1,4 @@
-interface ProjectSettings {
+export interface ProjectSettings {
     id: string
     title: string
     status: string

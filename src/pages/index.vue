@@ -16,126 +16,47 @@
 </template>
 
 <script lang="ts" setup>
-let projects = [
-  {
-    id: "ID001",
-    title: "Интеллектуальный анализ данных",
-    status: "В работе",
-    createdAt: "2025-02-01",
-    description: "Проект посвящён разработке системы для интеллектуального анализа больших объёмов данных.",
-    tags: ["AI", "Data Mining"],
-    knowledgeArea: ["Информатика", "Искусственный интеллект"],
-    participants: 5,
-    citationIndex: 3,
-    linkedProjects: [{ id: "ID010" }, { id: "ID004" }]
-  },
-  {
-    id: "ID002",
-    title: "Роботизированная платформа для сельского хозяйства",
-    status: "Завершён",
-    createdAt: "2024-12-15",
-    description: "Создание автономной системы для мониторинга и обработки сельскохозяйственных полей.",
-    tags: ["Robotics", "AgriTech"],
-    knowledgeArea: ["Механика", "Сельское хозяйство"],
-    participants: 8,
-    citationIndex: 5,
-    linkedProjects: [{ id: "ID005" }]
-  },
-  {
-    id: "ID003",
-    title: "Анализ социальных сетей",
-    status: "В работе",
-    createdAt: "2025-03-10",
-    description: "Изучение поведенческих паттернов пользователей в популярных социальных сетях.",
-    tags: ["Social", "ML"],
-    knowledgeArea: ["Социология", "Информатика"],
-    participants: 6,
-    citationIndex: 2,
-    linkedProjects: [{ id: "ID001" }, { id: "ID002" }]
-  },
-  {
-    id: "ID004",
-    title: "Прогнозирование погодных условий",
-    status: "Приостановлен",
-    createdAt: "2024-11-20",
-    description: "Моделирование и предсказание климатических изменений с помощью нейросетей.",
-    tags: ["Climate", "Forecast"],
-    knowledgeArea: ["Физика", "География"],
-    participants: 4,
-    citationIndex: 1,
-    linkedProjects: []
-  },
-  {
-    id: "ID005",
-    title: "Система голосового управления для автомобилей",
-    status: "В работе",
-    createdAt: "2025-01-05",
-    description: "Разработка безопасной и адаптивной голосовой системы для вождения.",
-    tags: ["Voice", "UX"],
-    knowledgeArea: ["Лингвистика", "Информатика"],
-    participants: 7,
-    citationIndex: 4,
-    linkedProjects: [{ id: "ID002" }]
-  },
-  {
-    id: "ID006",
-    title: "Разработка образовательной платформы",
-    status: "Архив",
-    createdAt: "2023-10-01",
-    description: "Создание платформы дистанционного обучения с элементами геймификации.",
-    tags: ["Education", "Gamification"],
-    knowledgeArea: ["Педагогика", "IT"],
-    participants: 10,
-    citationIndex: 6,
-    linkedProjects: [{ id: "ID009" }]
-  },
-  {
-    id: "ID007",
-    title: "Система мониторинга здоровья",
-    status: "Завершён",
-    createdAt: "2024-08-18",
-    description: "Система анализа биомедицинских данных для предиктивной диагностики заболеваний.",
-    tags: ["Health", "IoT"],
-    knowledgeArea: ["Медицина", "Информатика"],
-    participants: 9,
-    citationIndex: 7,
-    linkedProjects: []
-  },
-  {
-    id: "ID008",
-    title: "Автоматизация документооборота",
-    status: "В работе",
-    createdAt: "2025-04-02",
-    description: "Цель проекта — минимизация ручной обработки документов в организациях.",
-    tags: ["Automation", "OCR"],
-    knowledgeArea: ["Делопроизводство", "Информационные системы"],
-    participants: 3,
-    citationIndex: 2,
-    linkedProjects: [{ id: "ID006" }]
-  },
-  {
-    id: "ID009",
-    title: "Умный дом: управление энергопотреблением",
-    status: "Приостановлен",
-    createdAt: "2024-05-10",
-    description: "Разработка системы управления энергопотреблением в жилых помещениях.",
-    tags: ["Smart Home", "Energy"],
-    knowledgeArea: ["Энергетика", "Автоматизация"],
-    participants: 5,
-    citationIndex: 3,
-    linkedProjects: [{ id: "ID007" }]
-  },
-  {
-    id: "ID010",
-    title: "Обработка естественного языка для анализа новостей",
-    status: "В работе",
-    createdAt: "2025-02-20",
-    description: "Проект направлен на автоматическую фильтрацию и анализ новостных потоков.",
-    tags: ["NLP", "News"],
-    knowledgeArea: ["Лингвистика", "Искусственный интеллект"],
-    participants: 4,
-    citationIndex: 2,
-    linkedProjects: [{ id: "ID003" }]
+import type { ProjectRead } from '@/api-client/types'
+import type { Project } from '@/types/project' // если есть отдельный файл с твоим Project
+import { getSubjectArea } from '@/api-client/subjectAreas'
+
+async function mapProjectReadToProject(api: ProjectRead): Promise<Project> {
+  let knowledgeArea: string[] = []
+  try {
+    if (api.subject_area_id) {
+      const sa = await getSubjectArea(api.subject_area_id)
+      // Можно вложенность, если API возвращает parent/children
+      knowledgeArea = [sa.name]
+    }
+  } catch (e) {
+    // Если не удалось — knowledgeArea останется пустым
+    console.error('Ошибка получения области знаний:', e)
   }
-]
+
+  return {
+    id: String(api.id),
+    title: api.title,
+    status: api.status,
+    createdAt: api.created_at,
+    description: api.description || '',
+    tags: api.keywords || [],
+    knowledgeArea,
+    participants: 0, // если нет в api
+    citationIndex: api.citation_count ?? 0,
+    linkedProjects: [], // если нужно — реализуй аналогично
+  }
+}
+
+import { ref, onMounted } from 'vue'
+import { getProjects } from '@/api-client/projects'
+const projects = ref<Project[]>([])
+
+onMounted(async () => {
+  try {
+    const apiProjects = await getProjects()
+    projects.value = await Promise.all(apiProjects.map(mapProjectReadToProject))
+  } catch (e) {
+    console.error('Ошибка загрузки проектов', e)
+  }
+})
 </script>
