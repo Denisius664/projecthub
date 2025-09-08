@@ -11,7 +11,6 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
   // Сохраняем токен в localStorage
-  localStorage.setItem('access_token', response.data.access_token);
   return response.data;
 }
 
