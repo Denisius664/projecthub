@@ -9,7 +9,7 @@
 
             <v-card-title>
                 <v-list-item :to="`/project/${project.id}`" class="pa-0">
-                    <span class="text-medium-emphasis">#{{ project.id }}</span>
+                    <!-- <span class="text-medium-emphasis">#{{ project.id }}</span> -->
                     {{ project.title }}
                     <v-chip :color="statusColor" class="font-weight-medium" variant="tonal">
                         {{ project.status }}
