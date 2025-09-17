@@ -8,8 +8,7 @@
                 <v-row>
                     <v-col>
                         <v-text-field variant="solo" color="primary" v-model="projectName" label="Название" required />
-                        <v-combobox variant="solo" color="primary" v-model="projectTags" label="Тэги" multiple chips clearable
-                            :items="availableTags" />
+                        <v-combobox variant="solo" color="primary" v-model="projectTags" label="Тэги" multiple chips clearable/>
                         <v-textarea variant="solo" color="primary" v-model="projectDescription" label="Подробное описание" />
                     </v-col>
 
@@ -44,8 +43,6 @@ const projectName = ref('');
 const projectTags = ref([]);
 const projectDescription = ref('');
 const selectedSubjectArea = ref([]);
-
-const availableTags = ['analytics', 'research', 'machine learning', 'education', 'development'];
 
 type TreeNode = {
   id: number;

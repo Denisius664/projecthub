@@ -40,7 +40,7 @@
                 <v-row no-gutters>
                     <v-col>
                         <p class="text-subtitle-1">Статус</p>
-                        <v-select v-model="edited.status" :items="['В работе', 'Завершён', 'Архив']" variant="outlined" />
+                        <v-select v-model="edited.status" :items="['в работе', 'приостановлен', 'завершен']" variant="outlined" />
                     </v-col>
                 </v-row>
 
@@ -70,6 +70,8 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
 import type { ProjectSettings } from '@/types'
+import { updateProject } from '@/api-client/projects';
+import type { ProjectCreate } from '@/api-client/types';
 
 // Локальный reactive объект для редактирования — создаём копию
 const props = defineProps<{ initialSettings: ProjectSettings }>()
@@ -86,8 +88,15 @@ watch(
 )
 
 function saveSettings() {
-    // Здесь логика сохранения, например, emit события или API вызов
-    console.log('Сохраняем:', edited.value)
+    var p: ProjectCreate = {
+        title: edited.value.title,
+        description: edited.value.description,
+        status: edited.value.status as any,
+        keywords: edited.value.tags,
+        subject_area_id: null,
+        is_public: null,
+    }
+    updateProject(Number(props.initialSettings.id), p)
 }
 </script>
   

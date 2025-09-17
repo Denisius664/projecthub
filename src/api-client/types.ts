@@ -3,14 +3,14 @@
 export interface UserCreate {
   name: string;
   email: string;
-  role: "пользователь" | "админ";
+  role: 'пользователь' | 'админ';
   password: string;
 }
 
 export interface UserRead {
   name: string;
   email: string;
-  role: "пользователь" | "админ";
+  role: 'пользователь' | 'админ';
   id: number;
   created_at: string;
 }
@@ -18,7 +18,7 @@ export interface UserRead {
 export interface ProjectCreate {
   title: string;
   description: string | null;
-  status: "в работе" | "приостановлен" | "завершен";
+  status: 'в работе' | 'приостановлен' | 'завершен';
   keywords: string[];
   subject_area_id: number | null;
   is_public?: boolean | null;
@@ -27,7 +27,7 @@ export interface ProjectCreate {
 export interface ProjectRead {
   title: string;
   description: string | null;
-  status: "в работе" | "приостановлен" | "завершен";
+  status: 'в работе' | 'приостановлен' | 'завершен';
   keywords: string[];
   subject_area_id: number | null;
   is_public?: boolean | null;
@@ -56,13 +56,13 @@ export interface SubjectAreaRead {
 export interface TeamMemberCreate {
   project_id: number;
   user_id: number;
-  role: "участник" | "куратор" | "ответственный";
+  role: 'участник' | 'куратор' | 'ответственный';
 }
 
 export interface TeamMemberRead {
   project_id: number;
   user_id: number;
-  role: "участник" | "куратор" | "ответственный";
+  role: 'участник' | 'куратор' | 'ответственный';
   id: number;
   joined_at: string;
 }
@@ -71,7 +71,7 @@ export interface ProjectFileCreate {
   project_id: number;
   name: string;
   url: string;
-  file_metadata?: Record<string, any> | null;
+  file_metadata?: Record<string, unknown> | null;
   uploaded_by: number;
   is_public?: boolean | null;
 }
@@ -80,7 +80,7 @@ export interface ProjectFileRead {
   project_id: number;
   name: string;
   url: string;
-  file_metadata?: Record<string, any> | null;
+  file_metadata?: Record<string, unknown> | null;
   uploaded_by: number;
   is_public?: boolean | null;
   id: number;
