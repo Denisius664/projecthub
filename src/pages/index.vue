@@ -2,33 +2,16 @@
   <v-container class="py-6" max-width="1000px">
     <!-- Поиск -->
     <div class="d-flex ga-4 mb-4">
-      <v-text-field
-        v-model="searchQuery"
-        placeholder="Поиск проектов"
-        variant="outlined"
-        clearable
-        density="compact"
-        prepend-inner-icon="mdi-magnify"
-        @input="doSearch"
-      />
-      <v-btn
-        color="primary"
-        prepend-icon="mdi-filter"
-        variant="outlined"
-        @click="filtersDialog = true"
-      >
+      <v-text-field v-model="searchQuery" placeholder="Поиск проектов" variant="outlined" clearable density="compact"
+        prepend-inner-icon="mdi-magnify" @input="doSearch" />
+      <v-btn color="primary" prepend-icon="mdi-filter" variant="outlined" @click="filtersDialog = true">
         Фильтры
       </v-btn>
     </div>
 
     <!-- Список проектов -->
     <v-row v-if="projects.length">
-      <v-col
-        v-for="project in projects"
-        :key="project.id"
-        cols="12"
-        md="12"
-      >
+      <v-col v-for="project in projects" :key="project.id" cols="12" md="12">
         <project-card :project="project"></project-card>
       </v-col>
     </v-row>
@@ -39,21 +22,10 @@
       <v-card>
         <v-card-title>Фильтры</v-card-title>
         <v-card-text>
-          <v-select
-            v-model="filters.status"
-            :items="['в работе', 'приостановлен', 'завершен']"
-            label="Статус"
-            clearable
-          />
-          <v-text-field
-            v-model.number="filters.subject_area_id"
-            label="ID предметной области"
-            clearable
-          />
-          <v-switch
-            v-model="filters.is_public"
-            label="Только публичные"
-          />
+          <v-select v-model="filters.status" :items="['в работе', 'приостановлен', 'завершен']" label="Статус"
+            clearable />
+          <v-select :items="subjectAreas" item-value="id" item-title="name" clearable v-model="filters.subject_area_id" label="Предметная область"></v-select>
+          <v-switch v-model="filters.is_public" label="Только публичные" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -67,18 +39,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { filterProjects } from '@/api-client/projects'
-import type { ProjectRead } from '@/api-client/types'
-import { getSubjectArea } from '@/api-client/subjectAreas'
+import type { ProjectRead, SubjectAreaRead } from '@/api-client/types'
+import { getSubjectArea, getSubjectAreas } from '@/api-client/subjectAreas'
 import { getTeamMembers } from '@/api-client/teamMembers'
-import { Project } from '@/types'
-
-const router = useRouter()
+import type { Project } from '@/types'
+import { getProjectConnections } from '@/api-client/projectConnections'
 
 // состояние
 const searchQuery = ref('')
 const projects = ref<Project[]>([])
+
+const subjectAreas = ref<SubjectAreaRead[]>([])
 
 // фильтры
 const filtersDialog = ref(false)
@@ -96,8 +68,8 @@ async function doSearch() {
     limit: 20,
   })
   projects.value = await Promise.all(
-      apiProjects.map(mapProjectReadToProject)
-    );
+    apiProjects.map(mapProjectReadToProject)
+  );
 }
 
 // применить фильтры
@@ -106,18 +78,15 @@ async function applyFilters() {
   await doSearch()
 }
 
-// переход в проект
-function goToProject(projectId: number) {
-  router.push(`/project/${projectId}`)
-}
-
-onMounted(() => {
+onMounted(async () => {
   doSearch()
+  subjectAreas.value = await getSubjectAreas()
 })
 
 async function mapProjectReadToProject(api: ProjectRead): Promise<Project> {
   let knowledgeArea: string[] = [];
   let participants: number = 0;
+  let linkedProjects: { id: string }[] = [];
   try {
     if (api.subject_area_id) {
       var sa = await getSubjectArea(api.subject_area_id);
@@ -140,6 +109,16 @@ async function mapProjectReadToProject(api: ProjectRead): Promise<Project> {
     console.error("Ошибка получения участников:", e);
   }
 
+  try {
+    var pc = await getProjectConnections(api.id);
+    linkedProjects = pc.map((v) => {
+      return { id: `${v.related_project_id}` };
+    })
+  } catch (e) {
+    // Если не удалось — knowledgeArea останется пустым
+    console.error("Ошибка получения области знаний:", e);
+  }
+
   return {
     id: String(api.id),
     title: api.title,
@@ -150,7 +129,7 @@ async function mapProjectReadToProject(api: ProjectRead): Promise<Project> {
     knowledgeArea,
     participants,
     citationIndex: api.citation_count ?? 0,
-    linkedProjects: [], // если нужно — реализуй аналогично
+    linkedProjects, // если нужно — реализуй аналогично
   };
 }
 </script>

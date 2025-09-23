@@ -8,10 +8,16 @@ interface AuthState {
 }
 
 export const useAuthStore = defineStore("auth", {
-  state: (): AuthState => ({
-    token: localStorage.getItem("access_token"),
-    user: null,
-  }),
+  state: (): AuthState => {
+    var user = null
+    let userString = localStorage.getItem("user")
+    if (userString) {
+      user = JSON.parse(userString)
+    }
+    return ({
+      token: localStorage.getItem("access_token"),
+      user: user,
+    })},
 
   getters: {
     isAuthenticated: (state) => state.token != null,
@@ -28,6 +34,7 @@ export const useAuthStore = defineStore("auth", {
       // загружаем профиль (если эндпоинт доступен)
       try {
         const me = await getMe();
+        localStorage.setItem("user", JSON.stringify(me))
         this.user = me;
       } catch (e) {
         console.error("Ошибка загрузки профиля:", e);
@@ -41,6 +48,7 @@ export const useAuthStore = defineStore("auth", {
       this.token = null;
       this.user = null;
       localStorage.removeItem("access_token");
+      localStorage.removeItem("user")
     },
   },
 });

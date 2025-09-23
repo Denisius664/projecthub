@@ -5,4 +5,5 @@ export interface ProjectSettings {
     createdAt: string
     description: string
     tags: string[]
+    isPublic: boolean
 }

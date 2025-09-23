@@ -23,7 +23,7 @@
     </div>
 
     <div>
-      <p class="text-medium-emphasis">Создано: {{ project.createdAt }}</p>
+      <p class="text-medium-emphasis">Создано: {{ formatDate(project.createdAt) }}</p>
     </div>
 
     <v-card :text="project.description" title="Описание проекта" />
@@ -241,6 +241,7 @@ import type {
 } from "@/api-client/types";
 import { getUsers } from "@/api-client/users";
 import type { ProjectFull } from "@/types";
+import { formatDate } from "@/utils/dateformat";
 import { useRouter } from "vue-router";
 
 const members = ref<TeamMemberRead[]>([]);

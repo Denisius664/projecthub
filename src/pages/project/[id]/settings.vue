@@ -22,6 +22,7 @@ function mapProjectReadToSettings(api: ProjectRead): ProjectSettings {
         createdAt: api.created_at,
         description: api.description ?? '',
         tags: api.keywords ?? [],
+        isPublic: api.is_public ?? true,
     }
 }
 
@@ -36,5 +37,5 @@ onMounted(async () => {
 
 </script>
 <style lang="">
-    
+
 </style>

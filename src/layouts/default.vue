@@ -1,19 +1,11 @@
 <template>
   <v-app-bar>
     <v-app-bar-title>
-      <router-link class="text-h5 text-black text-decoration-none" to="/"
-        >ProjectHub</router-link
-      >
+      <router-link class="text-h5 text-black text-decoration-none" to="/">ProjectHub</router-link>
     </v-app-bar-title>
     <v-spacer></v-spacer>
     <template v-slot:append>
-      <v-btn
-        to="/project/create"
-        class="mr-1"
-        color="primary"
-        variant="outlined"
-        >Создать проект</v-btn
-      >
+      <v-btn to="/project/create" class="mr-1" color="primary" variant="outlined">Создать проект</v-btn>
       <template v-if="isAuthenticated">
         <v-menu>
           <template v-slot:activator="{ props }">
@@ -21,7 +13,8 @@
           </template>
           <v-list>
             <v-list-item>
-              <v-list-item-title>{{ user?.name }}</v-list-item-title>
+              <v-list-item-title><router-link :to="`/profile/${user?.id}`">{{ user?.name
+                  }}</router-link></v-list-item-title>
             </v-list-item>
             <v-divider />
             <v-list-item @click="logout">
@@ -35,7 +28,8 @@
       </template>
     </template>
   </v-app-bar>
-  <v-main> <router-view /> </v-main> <AppFooter />
+  <v-main> <router-view /> </v-main>
+  <AppFooter />
 </template>
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'

@@ -1,14 +1,15 @@
 <template>
     <v-card variant="elevated" elevation="4">
         <v-card-item>
-            <v-breadcrumbs class="text-subtitle-2 py-0 text-disabled pt-1" density="compact" :items="project.knowledgeArea">
+            <v-breadcrumbs class="text-subtitle-2 py-0 text-disabled pt-1" density="compact"
+                :items="project.knowledgeArea">
                 <template #divider>
                     <v-icon icon="mdi-chevron-right" />
                 </template>
             </v-breadcrumbs>
 
             <v-card-title>
-                <v-list-item :to="`/project/${project.id}`" class="pa-0">
+                <v-list-item :to="`/project/${project.id}`" class="pa-0 truncate">
                     <!-- <span class="text-medium-emphasis">#{{ project.id }}</span> -->
                     {{ project.title }}
                     <v-chip :color="statusColor" class="font-weight-medium" variant="tonal">
@@ -17,14 +18,14 @@
                 </v-list-item>
             </v-card-title>
 
-            <v-card-subtitle>Создан: {{ project.createdAt }}</v-card-subtitle>
+            <v-card-subtitle>Создан: {{ formatDate(project.createdAt) }}</v-card-subtitle>
 
-            <template #append>
-                <v-btn variant="text" icon="mdi-dots-vertical"></v-btn>
-            </template>
+            <!-- <template #append>
+                <v-btn variant="text" icon="mdi-star"></v-btn>
+            </template> -->
         </v-card-item>
 
-        <v-card-text class="pb-0">
+        <v-card-text class="truncate pb-0">
             {{ project.description }}
         </v-card-text>
 
@@ -57,10 +58,11 @@
         </v-card-item>
     </v-card>
 </template>
-  
+
 <script setup lang="ts">
 import { defineProps, computed } from 'vue'
 import type { Project } from '@/types'
+import { formatDate } from '@/utils/dateformat';
 
 const props = defineProps<{ project: Project }>()
 
@@ -79,4 +81,3 @@ const statusColor = computed(() => {
     }
 })
 </script>
-  
