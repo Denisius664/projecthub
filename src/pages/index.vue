@@ -16,7 +16,6 @@
       </v-col>
     </v-row>
     <p v-else class="text-medium-emphasis">Проекты не найдены</p>
-
     <!-- Диалог фильтров -->
     <v-dialog v-model="filtersDialog" max-width="500">
       <v-card>
@@ -24,8 +23,11 @@
         <v-card-text>
           <v-select v-model="filters.status" :items="['в работе', 'приостановлен', 'завершен']" label="Статус"
             clearable />
-          <v-select :items="subjectAreas" item-value="id" item-title="name" clearable v-model="filters.subject_area_id" label="Предметная область"></v-select>
+          <v-select :items="subjectAreas" item-value="id" item-title="name" clearable v-model="filters.subject_area_id"
+            label="Предметная область" />
           <v-switch v-model="filters.is_public" label="Только публичные" />
+          <v-combobox v-model="filters.tags" label="Теги" multiple chips clearable hide-selected
+            placeholder="Введите теги" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -34,12 +36,13 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { filterProjects } from '@/api-client/projects'
+import { ref, onMounted, computed } from 'vue'
+import { filterProjectsV2 } from '@/api-client/projects'
 import type { ProjectRead, SubjectAreaRead } from '@/api-client/types'
 import { getSubjectArea, getSubjectAreas } from '@/api-client/subjectAreas'
 import { getTeamMembers } from '@/api-client/teamMembers'
@@ -54,22 +57,35 @@ const subjectAreas = ref<SubjectAreaRead[]>([])
 
 // фильтры
 const filtersDialog = ref(false)
-const filters = ref<{
-  status?: string
-  subject_area_id?: number
-  is_public?: boolean
-}>({})
+const filters = ref({
+  status: null as string | null,
+  subject_area_id: null as number | null,
+  is_public: false,
+  tags: [] as string[],
+})
+
+
+const tagsAsString = computed(() => filters.value.tags.join(', '))
 
 // загрузка проектов
 async function doSearch() {
-  const apiProjects = await filterProjects({
-    search: searchQuery.value,
-    ...filters.value,
+  const params = {
+    status: filters.value.status || undefined,
+    subject_area_id: filters.value.subject_area_id || undefined,
+    is_public: filters.value.is_public || undefined,
+    keywords: tagsAsString.value || undefined,
+    keyword_match: 'all' as const,
     limit: 20,
-  })
-  projects.value = await Promise.all(
-    apiProjects.map(mapProjectReadToProject)
-  );
+  }
+
+  try {
+    let apiProjects = await filterProjectsV2(params)
+    projects.value = await Promise.all(
+      apiProjects.map(mapProjectReadToProject)
+    );
+  } catch (e) {
+    console.error('Ошибка загрузки проектов:', e)
+  }
 }
 
 // применить фильтры

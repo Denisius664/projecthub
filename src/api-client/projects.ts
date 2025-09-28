@@ -48,3 +48,18 @@ export async function filterProjects(params: {
   const response = await api.get('/api/projects_fil/', { params });
   return response.data;
 }
+
+// Фильтрованный поиск проектов V2
+export async function filterProjectsV2(params: {
+  search?: string;
+  keywords?: string;
+  keyword_match?: 'all' | 'any';
+  status?: string;
+  subject_area_id?: number;
+  is_public?: boolean;
+  skip?: number;
+  limit?: number;
+}): Promise<ProjectRead[]> {
+  const response = await api.get('/api/projects/search_by_all', { params });
+  return response.data;
+}

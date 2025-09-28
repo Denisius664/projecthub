@@ -1,10 +1,6 @@
 <template>
   <v-container class="pt-10 d-flex flex-column ga-4" max-width="900px">
-    <v-breadcrumbs
-      class="text-subtitle-2 py-0 text-disabled pt-1"
-      density="compact"
-      :items="project.knowledgeArea"
-    >
+    <v-breadcrumbs class="text-subtitle-2 py-0 text-disabled pt-1" density="compact" :items="project.knowledgeArea">
       <template v-slot:divider>
         <v-icon icon="mdi-chevron-right"></v-icon>
       </template>
@@ -15,51 +11,27 @@
         <span class="text-h3 text-medium-emphasis">#{{ project.id }}</span>
         <h1 class="text-h3">{{ project.title }}</h1>
       </div>
-      <v-btn
-        color="primary"
-        icon="mdi-cog"
-        :to="`/project/${project.id}/settings`"
-      ></v-btn>
+      <v-btn color="primary" icon="mdi-cog" :to="`/project/${project.id}/settings`"></v-btn>
     </div>
 
+    <div>
+      <v-chip v-for="tag in project.tags" :key="tag" class="mr-1" color="primary" variant="tonal">
+        {{ tag }}
+      </v-chip>
+    </div>
     <div>
       <p class="text-medium-emphasis">Создано: {{ formatDate(project.createdAt) }}</p>
     </div>
 
-    <v-card :text="project.description" title="Описание проекта" />
-
-    <v-card title="Тэги">
-      <v-card-item>
-        <v-chip
-          v-for="tag in project.tags"
-          :key="tag"
-          class="mr-1"
-          color="primary"
-          variant="tonal"
-        >
-          {{ tag }}
-        </v-chip>
-      </v-card-item>
-    </v-card>
-
-    <v-card text="Контент README файла в формате md" title="README" />
+    <v-card v-if="project.description" :text="project.description" title="Описание проекта" />
+    <v-card v-else text="Нет описания проекта" title="Описание проекта"></v-card>
+    <!-- <v-card text="Контент README файла в формате md" title="README" /> -->
 
     <v-card title="Файлы проекта">
       <v-card-text>
         <!-- Загрузка файлов -->
-        <v-file-input
-          v-model="newFiles"
-          multiple
-          show-size
-          prepend-icon="mdi-upload"
-          label="Загрузить файлы"
-        />
-        <v-btn
-          class="mt-2"
-          color="primary"
-          @click="uploadFiles"
-          :disabled="!newFiles || newFiles.length === 0"
-        >
+        <v-file-input v-model="newFiles" multiple show-size prepend-icon="mdi-upload" label="Загрузить файлы" />
+        <v-btn class="mt-2" color="primary" @click="uploadFiles" :disabled="!newFiles || newFiles.length === 0">
           Загрузить
         </v-btn>
 
@@ -83,17 +55,8 @@
                 </v-chip>
               </td>
               <td>
-                <v-btn
-                  icon="mdi-download"
-                  variant="text"
-                  @click="downloadFile(file.id, file.name)"
-                />
-                <v-btn
-                  icon="mdi-delete"
-                  color="error"
-                  variant="text"
-                  @click="deleteFile(file.id)"
-                />
+                <v-btn icon="mdi-download" variant="text" @click="downloadFile(file.id, file.name)" />
+                <v-btn icon="mdi-delete" color="error" variant="text" @click="deleteFile(file.id)" />
               </td>
             </tr>
           </tbody>
@@ -103,22 +66,15 @@
     <!-- Участники проекта -->
     <v-card title="Участники">
       <v-list>
-        <v-list-item
-          v-for="member in members"
-          :title="getUserName(member.user_id)"
-          :key="member.user_id"
-        >
+        <v-list-item v-for="member in members" :title="getUserName(member.user_id)" :key="member.user_id">
           <template v-slot:prepend>
             <v-avatar color="grey-lighten-1">
               <v-icon color="white">mdi-account</v-icon>
             </v-avatar>
           </template>
           <template v-slot:append>
-            <v-select
-              v-model="member.role"
-              :items="['участник', 'куратор', 'ответственный']"
-              @update:model-value="(newRole) => changeRole(member.id, newRole)"
-            />
+            <v-select v-model="member.role" :items="['участник', 'куратор', 'ответственный']"
+              @update:model-value="(newRole) => changeRole(member.id, newRole)" />
           </template>
         </v-list-item>
       </v-list>
@@ -131,12 +87,8 @@
 
     <v-card title="Связанные проекты">
       <v-list>
-        <v-list-item
-          v-for="rel in projectConnections"
-          :key="rel.related_project_id"
-          link
-          @click="openProject(rel.related_project_id)"
-        >
+        <v-list-item v-for="rel in projectConnections" :key="rel.related_project_id" link
+          @click="openProject(rel.related_project_id)">
           <v-list-item-title>
             {{ getProjectTitle(rel.related_project_id) }}
           </v-list-item-title>
@@ -144,14 +96,9 @@
             Добавлен {{ new Date(rel.created_at).toLocaleDateString() }}
           </v-list-item-subtitle>
           <template v-slot:append>
-            <v-btn
-              icon="mdi-delete"
-              color="error"
-              variant="text"
-              @click.stop="
-                removeConnection(rel.project_id, rel.related_project_id)
-              "
-            />
+            <v-btn icon="mdi-delete" color="error" variant="text" @click.stop="
+              removeConnection(rel.project_id, rel.related_project_id)
+              " />
           </template>
         </v-list-item>
       </v-list>
@@ -169,14 +116,8 @@
       <v-card>
         <v-card-title>Добавить связанный проект</v-card-title>
         <v-card-text>
-          <v-autocomplete
-            v-model="selectedProject"
-            item-title="title"
-            item-value="id"
-            :items="allProjects"
-            label="Выберите проект"
-            variant="outlined"
-          />
+          <v-autocomplete v-model="selectedProject" item-title="title" item-value="id" :items="allProjects"
+            label="Выберите проект" variant="outlined" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -191,16 +132,8 @@
       <v-card>
         <v-card-title>Пригласить участников</v-card-title>
         <v-card-text>
-          <v-autocomplete
-            v-model="selectedUsers"
-            chips
-            item-title="name"
-            item-value="id"
-            :items="allUsers"
-            label="Выберите пользователей"
-            multiple
-            variant="outlined"
-          />
+          <v-autocomplete v-model="selectedUsers" chips item-title="name" item-value="id" :items="allUsers"
+            label="Выберите пользователей" multiple variant="outlined" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
