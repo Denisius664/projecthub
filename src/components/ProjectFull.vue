@@ -11,7 +11,7 @@
         <span class="text-h3 text-medium-emphasis">#{{ project.id }}</span>
         <h1 class="text-h3">{{ project.title }}</h1>
       </div>
-      <v-btn color="primary" icon="mdi-cog" :to="`/project/${project.id}/settings`"></v-btn>
+      <v-btn v-if="canSeeSettings" color="primary" icon="mdi-cog" :to="`/project/${project.id}/settings`" />
     </div>
 
     <div>
@@ -75,6 +75,8 @@
           <template v-slot:append>
             <v-select v-model="member.role" :items="['участник', 'куратор', 'ответственный']"
               @update:model-value="(newRole) => changeRole(member.id, newRole)" />
+            <v-btn v-if="canRemove(member.user_id)" icon="mdi-delete" color="error" variant="text"
+              @click="removeMember(member.id)" />
           </template>
         </v-list-item>
       </v-list>
@@ -160,6 +162,7 @@ import {
 import { getProjects } from "@/api-client/projects";
 import {
   createTeamMember,
+  deleteTeamMember,
   getTeamMembers,
   updateTeamMember,
 } from "@/api-client/teamMembers";
@@ -176,6 +179,11 @@ import { getUsers } from "@/api-client/users";
 import type { ProjectFull } from "@/types";
 import { formatDate } from "@/utils/dateformat";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useAuthStore } from "@/stores/auth";
+
+const authStore = useAuthStore();
+const { user, isAdmin } = storeToRefs(authStore); // user.id, isAdmin: boolean
 
 const members = ref<TeamMemberRead[]>([]);
 const allUsers = ref<UserRead[]>([]);
@@ -191,6 +199,23 @@ const router = useRouter();
 
 const projectFiles = ref<ProjectFileRead[]>([]);
 const newFiles = ref<File[]>([]);
+
+// роль текущего пользователя в проекте
+const currentMember = computed(() =>
+  members.value.find((m) => m.user_id === user.value?.id) || null
+);
+const currentRole = computed(() => currentMember.value?.role || null);
+
+const canSeeSettings = computed(() => {
+  return isAdmin.value || currentRole.value !== null;
+});
+
+function canRemove(userId: number): boolean {
+  if (isAdmin.value) return true;
+  if (!currentRole.value) return false;
+  if (currentRole.value === "участник") return userId === user.value?.id;
+  return true; // куратор или ответственный
+}
 
 const props = defineProps<{
   project: ProjectFull;
@@ -314,5 +339,10 @@ async function downloadFile(fileId: number, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+async function removeMember(memberId: number) {
+  await deleteTeamMember(memberId)
+  members.value = await getTeamMembers(Number(props.project.id));
 }
 </script>
