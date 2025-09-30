@@ -1,5 +1,6 @@
 <template>
-    <project-settings v-if="projSettings" :initial-settings="projSettings" />
+    <v-progress-circular v-if="loading" indeterminate color="primary" class="ma-6" />
+    <project-settings v-else-if="projSettings" :initial-settings="projSettings" />
     <div v-else>Настроек проекта не найдено</div>
 </template>
 <script lang="ts" setup>
@@ -9,6 +10,7 @@ import { getProject } from '@/api-client/projects'
 import type { ProjectRead } from '@/api-client/types'
 import type { ProjectSettings } from '@/types'
 
+const loading = ref(false)
 const route = useRoute()
 const projectId: number = 'id' in route.params ? Number(route.params.id) : 0
 
@@ -27,11 +29,14 @@ function mapProjectReadToSettings(api: ProjectRead): ProjectSettings {
 }
 
 onMounted(async () => {
+    loading.value = true
     try {
         const apiProject = await getProject(projectId)
         projSettings.value = mapProjectReadToSettings(apiProject)
     } catch (e) {
         console.error('Ошибка загрузки настроек проекта', e)
+    } finally {
+        loading.value = false
     }
 })
 

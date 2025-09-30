@@ -1,8 +1,9 @@
 <template>
-  <project-full v-if="project" :project="project"/>
+  <v-progress-circular v-if="loading" indeterminate color="primary" class="ma-6" />
+  <project-full v-else-if="project" :project="project" />
   <div v-else>Проект не найден</div>
 </template>
-  
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import type { ProjectRead } from '@/api-client/types'
@@ -22,6 +23,8 @@ export interface ProjectFull {
   citationIndex: number
   linkedProjects: { id: string }[]
 }
+
+const loading = ref(false)
 
 async function mapProjectReadToProjectFull(api: ProjectRead): Promise<ProjectFull> {
   let knowledgeArea: string[] = []
@@ -54,12 +57,14 @@ const route = useRoute()
 const projectId: number = 'id' in route.params ? Number(route.params.id) : 0
 
 onMounted(async () => {
+  loading.value = true
   try {
     const apiProject = await getProject(projectId)
     project.value = await mapProjectReadToProjectFull(apiProject)
   } catch (e) {
     console.error('Ошибка загрузки проекта', e)
+  } finally {
+    loading.value = false
   }
 })
 </script>
-  

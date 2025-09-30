@@ -64,11 +64,15 @@
                 </v-row>
 
                 <v-row justify="end" class="mt-4 pr-5">
-                    <v-btn variant="text" color="grey" class="mr-3">Отмена</v-btn>
-                    <v-btn color="primary" @click="saveSettings">Сохранить</v-btn>
+                    <v-btn variant="text" color="grey" class="mr-3"
+                        :to="`/project/${initialSettings.id}`">Отмена</v-btn>
+                    <v-btn color="primary" @click="saveSettings" :disabled="!isChanged">Сохранить</v-btn>
                 </v-row>
             </v-container>
         </v-sheet>
+        <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
+            {{ snackbarMessage }}
+        </v-snackbar>
     </v-container>
 </template>
 
@@ -80,6 +84,9 @@ import type { ProjectCreate } from '@/api-client/types';
 
 // Локальный reactive объект для редактирования — создаём копию
 const props = defineProps<{ initialSettings: ProjectSettings }>()
+const snackbar = ref(false)
+const snackbarMessage = ref('')
+const snackbarColor = ref<'success' | 'error'>('success')
 
 const edited = ref<ProjectSettings>({ ...props.initialSettings })
 
@@ -92,7 +99,11 @@ watch(
     { deep: true }
 )
 
-function saveSettings() {
+const isChanged = computed(() => {
+    return JSON.stringify(edited.value) !== JSON.stringify(props.initialSettings)
+})
+
+async function saveSettings() {
     var p: ProjectCreate = {
         title: edited.value.title,
         description: edited.value.description,
@@ -101,7 +112,21 @@ function saveSettings() {
         subject_area_id: null,
         is_public: edited.value.isPublic,
     }
-    updateProject(Number(props.initialSettings.id), p)
+    try {
+        await updateProject(Number(props.initialSettings.id), p)
+        snackbarMessage.value = 'Настройки успешно сохранены'
+        snackbarColor.value = 'success'
+    } catch (e) {
+        console.error('Ошибка сохранения настроек', e)
+        snackbarMessage.value = 'Ошибка при сохранении настроек'
+        snackbarColor.value = 'error'
+    } finally {
+        snackbar.value = true
+    }
+}
+
+function cancel() {
+
 }
 </script>
 

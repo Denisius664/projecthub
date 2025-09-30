@@ -42,6 +42,9 @@
         </v-row>
       </v-container>
     </v-form>
+    <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -56,6 +59,16 @@ const projectTags = ref([]);
 const projectDescription = ref('');
 const selectedSubjectArea = ref([]);
 const isPublic = ref(true)
+
+// Snackbar
+const snackbar = ref(false)
+const snackbarMessage = ref('')
+const snackbarColor = ref('success')
+function showSnackbar(message: string, color: 'success' | 'error' = 'success') {
+  snackbarMessage.value = message
+  snackbarColor.value = color
+  snackbar.value = true
+}
 
 type TreeNode = {
   id: number;
@@ -94,7 +107,7 @@ function cancel() {
 
 async function createProject() {
   if (!projectName.value || selectedSubjectArea.value.length === 0) {
-    alert('Заполните все обязательные поля!')
+    showSnackbar('Заполните все обязательные поля!', 'error')
     return
   }
 
@@ -109,11 +122,11 @@ async function createProject() {
 
   try {
     const created = await apiCreateProject(data)
-    alert('Проект успешно создан: ' + created.title)
+    showSnackbar('Проект успешно создан: ' + created.title, 'success')
     cancel()
   } catch (e) {
-    alert('Ошибка при создании проекта')
     console.error(e)
+    showSnackbar('Ошибка при создании проекта', 'error')
   }
 }
 </script>

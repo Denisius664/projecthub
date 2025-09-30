@@ -32,6 +32,7 @@
         <!-- Загрузка файлов -->
         <v-file-input v-model="newFiles" multiple show-size prepend-icon="mdi-upload" label="Загрузить файлы" />
         <v-btn class="mt-2" color="primary" @click="uploadFiles" :disabled="!newFiles || newFiles.length === 0">
+          <v-progress-circular v-if="isUploading" indeterminate size="20" color="white" class="mr-2" />
           Загрузить
         </v-btn>
 
@@ -73,8 +74,13 @@
             </v-avatar>
           </template>
           <template v-slot:append>
-            <v-select v-model="member.role" :items="['участник', 'куратор', 'ответственный']"
-              @update:model-value="(newRole) => changeRole(member.id, newRole)" />
+            <template v-if="canChangeRole(member.user_id)">
+              <v-select v-model="member.role" :items="['участник', 'куратор', 'ответственный']"
+                @update:model-value="(newRole) => changeRole(member.id, newRole)" />
+            </template>
+            <template v-else>
+              <span>{{ member.role }}</span>
+            </template>
             <v-btn v-if="canRemove(member.user_id)" icon="mdi-delete" color="error" variant="text"
               @click="removeMember(member.id)" />
           </template>
@@ -144,6 +150,9 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -200,6 +209,18 @@ const router = useRouter();
 const projectFiles = ref<ProjectFileRead[]>([]);
 const newFiles = ref<File[]>([]);
 
+const snackbar = ref(false);
+const snackbarMessage = ref("");
+const snackbarColor = ref<"success" | "error">("success");
+
+const isUploading = ref(false);
+
+function showSnackbar(message: string, color: "success" | "error" = "success") {
+  snackbarMessage.value = message;
+  snackbarColor.value = color;
+  snackbar.value = true;
+}
+
 // роль текущего пользователя в проекте
 const currentMember = computed(() =>
   members.value.find((m) => m.user_id === user.value?.id) || null
@@ -214,6 +235,13 @@ function canRemove(userId: number): boolean {
   if (isAdmin.value) return true;
   if (!currentRole.value) return false;
   if (currentRole.value === "участник") return userId === user.value?.id;
+  return true; // куратор или ответственный
+}
+
+function canChangeRole(userId: number): boolean {
+  if (isAdmin.value) return true;
+  if (!currentRole.value) return false;
+  if (currentRole.value === 'участник') return false;
   return true; // куратор или ответственный
 }
 
@@ -233,20 +261,27 @@ onMounted(async () => {
 
 async function inviteUsers() {
   if (selectedUsers.value.length > 0) {
-    for (const user of selectedUsers.value) {
-      const member: TeamMemberCreate = {
-        project_id: Number(props.project.id),
-        user_id: user,
-        role: "участник",
-      };
-      await createTeamMember(member);
+    try {
+      for (const user of selectedUsers.value) {
+        const member: TeamMemberCreate = {
+          project_id: Number(props.project.id),
+          user_id: user,
+          role: "участник",
+        };
+        await createTeamMember(member);
+      }
+      // обновляем список участников
+      members.value = await getTeamMembers(Number(props.project.id));
+      selectedUsers.value = [];
+      inviteDialog.value = false;
+      showSnackbar("Пользователи успешно приглашены", "success");
+    } catch (error) {
+      console.error(error);
+      showSnackbar("Ошибка при приглашении пользователей", "error");
     }
-    // // обновляем список участников
-    members.value = await getTeamMembers(Number(props.project.id));
-    selectedUsers.value = [];
-    inviteDialog.value = false;
   }
 }
+
 
 // утилита для получения имени по id
 function getUserName(userId: number): string {
@@ -259,18 +294,27 @@ async function changeRole(
   member_id: number,
   newRole: "участник" | "куратор" | "ответственный"
 ) {
-  const user_id = members.value.find((m) => m.id == member_id)?.id;
-  if (user_id) {
+  const member = members.value.find((m) => m.id == member_id);
+  if (!member) {
+    showSnackbar("Пользователь не найден!", "error");
+    return;
+  }
+
+  try {
     const data: TeamMemberCreate = {
       project_id: Number(props.project.id),
-      user_id,
+      user_id: member.user_id,
       role: newRole,
     };
     await updateTeamMember(member_id, data);
-  } else {
-    alert("Пользователь не найден!");
+    member.role = newRole; // обновляем локально
+    showSnackbar("Роль успешно изменена", "success");
+  } catch (error) {
+    console.error(error);
+    showSnackbar("Ошибка при изменении роли", "error");
   }
 }
+
 
 function getProjectTitle(projectId: number): string {
   const project = allProjects.value.find((p) => p.id === projectId);
@@ -285,23 +329,35 @@ async function addConnection() {
     related_project_id: selectedProject.value,
   };
 
-  await createProjectConnection(connection);
-  projectConnections.value = await getProjectConnections(
-    Number(props.project.id)
-  );
-
-  selectedProject.value = null;
-  connectionDialog.value = false;
+  try {
+    await createProjectConnection(connection);
+    projectConnections.value = await getProjectConnections(
+      Number(props.project.id)
+    );
+    selectedProject.value = null;
+    connectionDialog.value = false;
+    showSnackbar("Связанный проект успешно добавлен", "success");
+  } catch (error) {
+    console.error(error);
+    showSnackbar("Ошибка при добавлении связанного проекта", "error");
+  }
 }
+
 
 async function removeConnection(
   project_id: number,
   related_project_id: number
 ) {
-  await deleteProjectConnection(project_id, related_project_id);
-  projectConnections.value = await getProjectConnections(
-    Number(props.project.id)
-  );
+  try {
+    await deleteProjectConnection(project_id, related_project_id);
+    projectConnections.value = await getProjectConnections(
+      Number(props.project.id)
+    );
+    showSnackbar("Связанный проект успешно удалён", "success");
+  } catch (error) {
+    console.error(error);
+    showSnackbar("Ошибка при удалении связанного проекта", "error");
+  }
 }
 
 function openProject(projectId: number) {
@@ -313,22 +369,37 @@ function openProject(projectId: number) {
 
 async function uploadFiles() {
   if (!newFiles.value || newFiles.value.length === 0) return;
-
-  for (const file of newFiles.value) {
-    await uploadProjectFile(
-      file,
-      Number(props.project.id),
-      1, // TODO: заменить на текущего пользователя
-      true
-    );
+  isUploading.value = true;
+  try {
+    for (const file of newFiles.value) {
+      await uploadProjectFile(
+        file,
+        Number(props.project.id),
+        1, // TODO: заменить на текущего пользователя
+        true
+      );
+    }
+    projectFiles.value = await getProjectFiles(Number(props.project.id));
+    newFiles.value = [];
+    showSnackbar("Файлы успешно загружены", "success");
+  } catch (error) {
+    console.error(error);
+    showSnackbar("Ошибка при загрузке файлов", "error");
+  } finally {
+    isUploading.value = false;
   }
-  projectFiles.value = await getProjectFiles(Number(props.project.id));
-  newFiles.value = [];
 }
 
+
 async function deleteFile(fileId: number) {
-  await deleteProjectFile(fileId);
-  projectFiles.value = await getProjectFiles(Number(props.project.id));
+  try {
+    await deleteProjectFile(fileId);
+    projectFiles.value = await getProjectFiles(Number(props.project.id));
+    showSnackbar("Файл успешно удалён", "success");
+  } catch (error) {
+    console.error(error);
+    showSnackbar("Ошибка при удалении файла", "error");
+  }
 }
 
 async function downloadFile(fileId: number, filename: string) {
@@ -342,7 +413,13 @@ async function downloadFile(fileId: number, filename: string) {
 }
 
 async function removeMember(memberId: number) {
-  await deleteTeamMember(memberId)
-  members.value = await getTeamMembers(Number(props.project.id));
+  try {
+    await deleteTeamMember(memberId);
+    members.value = await getTeamMembers(Number(props.project.id));
+    showSnackbar("Участник успешно удалён", "success");
+  } catch (error) {
+    console.error(error);
+    showSnackbar("Ошибка при удалении участника", "error");
+  }
 }
 </script>

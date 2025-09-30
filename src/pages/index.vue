@@ -9,8 +9,14 @@
       </v-btn>
     </div>
 
+    <v-row v-if="loading">
+      <v-col cols="12" class="text-center">
+        <v-progress-circular indeterminate color="primary" />
+      </v-col>
+    </v-row>
+
     <!-- Список проектов -->
-    <v-row v-if="projects.length">
+    <v-row v-else-if="projects.length">
       <v-col v-for="project in projects" :key="project.id" cols="12" md="12">
         <project-card :project="project"></project-card>
       </v-col>
@@ -49,6 +55,7 @@ import { getTeamMembers } from '@/api-client/teamMembers'
 import type { Project } from '@/types'
 import { getProjectConnections } from '@/api-client/projectConnections'
 
+const loading = ref(false)
 // состояние
 const searchQuery = ref('')
 const projects = ref<Project[]>([])
@@ -69,6 +76,7 @@ const tagsAsString = computed(() => filters.value.tags.join(', '))
 
 // загрузка проектов
 async function doSearch() {
+  loading.value = true
   const params = {
     status: filters.value.status || undefined,
     subject_area_id: filters.value.subject_area_id || undefined,
@@ -85,6 +93,8 @@ async function doSearch() {
     );
   } catch (e) {
     console.error('Ошибка загрузки проектов:', e)
+  } finally {
+    loading.value = false
   }
 }
 
