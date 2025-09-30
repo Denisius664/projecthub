@@ -81,7 +81,8 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    allowedHosts: ['sneid.ru', 'localhost']
+    allowedHosts: ['sneid.ru', 'localhost'],
+    host: true,
   },
   css: {
     preprocessorOptions: {

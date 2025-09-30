@@ -1,7 +1,12 @@
 <template>
   <v-app-bar>
     <v-app-bar-title>
-      <router-link class="text-h5 text-black text-decoration-none" to="/">ProjectHub</router-link>
+      <div class="d-flex align-center ga-2">
+        <v-img src="@/assets/logo-512x512.png" max-width="40" alt="ProjectHub Logo" />
+        <router-link class="text-h5 text-black text-decoration-none" to="/">
+          ProjectHub
+        </router-link>
+      </div>
     </v-app-bar-title>
     <v-spacer></v-spacer>
     <template v-slot:append>
@@ -14,7 +19,7 @@
           <v-list>
             <v-list-item>
               <v-list-item-title><router-link :to="`/profile/${user?.id}`">{{ user?.name
-                  }}</router-link></v-list-item-title>
+              }}</router-link></v-list-item-title>
             </v-list-item>
             <v-divider />
             <v-list-item @click="logout">
