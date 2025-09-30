@@ -8,7 +8,7 @@
 
     <div class="d-flex justify-space-between">
       <div class="d-flex ga-5">
-        <span class="text-h3 text-medium-emphasis">#{{ project.id }}</span>
+        <!-- <span class="text-h3 text-medium-emphasis">#{{ project.id }}</span> -->
         <h1 class="text-h3">{{ project.title }}</h1>
       </div>
       <v-btn v-if="canSeeSettings" color="primary" icon="mdi-cog" :to="`/project/${project.id}/settings`" />
