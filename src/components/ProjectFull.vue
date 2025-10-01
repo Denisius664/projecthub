@@ -30,11 +30,14 @@
     <v-card title="Файлы проекта">
       <v-card-text>
         <!-- Загрузка файлов -->
-        <v-file-input v-model="newFiles" multiple show-size prepend-icon="mdi-upload" label="Загрузить файлы" />
-        <v-btn class="mt-2" color="primary" @click="uploadFiles" :disabled="!newFiles || newFiles.length === 0">
-          <v-progress-circular v-if="isUploading" indeterminate size="20" color="white" class="mr-2" />
-          Загрузить
-        </v-btn>
+        <template v-if="canUploadFile()">
+          <v-file-input v-model="newFiles" multiple show-size prepend-icon="mdi-upload" label="Загрузить файлы" />
+          <v-btn class="mt-2" color="primary" @click="uploadFiles" :disabled="!newFiles || newFiles.length === 0">
+            <v-progress-circular v-if="isUploading" indeterminate size="20" color="white" class="mr-2" />
+            Загрузить
+          </v-btn>
+        </template>
+
 
         <!-- Список файлов -->
         <v-table class="mt-4">
@@ -57,7 +60,7 @@
               </td>
               <td>
                 <v-btn icon="mdi-download" variant="text" @click="downloadFile(file.id, file.name)" />
-                <v-btn icon="mdi-delete" color="error" variant="text" @click="deleteFile(file.id)" />
+                <v-btn v-if="canUploadFile()" icon="mdi-delete" color="error" variant="text" @click="deleteFile(file.id)" />
               </td>
             </tr>
           </tbody>
@@ -242,6 +245,12 @@ function canChangeRole(userId: number): boolean {
   if (isAdmin.value) return true;
   if (!currentRole.value) return false;
   if (currentRole.value === 'участник') return false;
+  return true; // куратор или ответственный
+}
+
+function canUploadFile(): boolean {
+  if (isAdmin.value) return true;
+  if (!currentRole.value) return false;
   return true; // куратор или ответственный
 }
 
