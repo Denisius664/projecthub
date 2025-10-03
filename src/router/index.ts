@@ -8,6 +8,7 @@
 import { createRouter, createWebHistory } from 'vue-router/auto'
 import { setupLayouts } from 'virtual:generated-layouts'
 import { routes } from 'vue-router/auto-routes'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +32,15 @@ router.onError((err, to) => {
 
 router.isReady().then(() => {
   localStorage.removeItem('vuetify:dynamic-reload')
+})
+
+router.beforeEach((to, from, next) => {
+  const auth = useAuthStore()
+  if (!auth.isAuthenticated && to.path !== '/login') {
+    next('/login') // всегда на страницу входа
+  } else {
+    next()
+  }
 })
 
 export default router

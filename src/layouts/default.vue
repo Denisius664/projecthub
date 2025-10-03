@@ -42,8 +42,10 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const { user, isAuthenticated } = storeToRefs(authStore)
+const router = useRouter()
 
 function logout() {
   authStore.logout()
+  router.push("/login")
 }
 </script>

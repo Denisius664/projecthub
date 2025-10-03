@@ -23,7 +23,9 @@
       <p class="text-medium-emphasis">Создано: {{ formatDate(project.createdAt) }}</p>
     </div>
 
-    <v-card v-if="project.description" :text="project.description" title="Описание проекта" />
+    <v-card class="formatted-text" v-if="project.description" :text="project.description" title="Описание проекта">
+
+    </v-card>
     <v-card v-else text="Нет описания проекта" title="Описание проекта"></v-card>
     <!-- <v-card text="Контент README файла в формате md" title="README" /> -->
 
@@ -32,6 +34,7 @@
         <!-- Загрузка файлов -->
         <template v-if="canUploadFile()">
           <v-file-input v-model="newFiles" multiple show-size prepend-icon="mdi-upload" label="Загрузить файлы" />
+          <v-switch v-model="isPublic" inset color="primary" :label="isPublic ? 'Публичный файл' : 'Приватный файл'" />
           <v-btn class="mt-2" color="primary" @click="uploadFiles" :disabled="!newFiles || newFiles.length === 0">
             <v-progress-circular v-if="isUploading" indeterminate size="20" color="white" class="mr-2" />
             Загрузить
@@ -60,7 +63,8 @@
               </td>
               <td>
                 <v-btn icon="mdi-download" variant="text" @click="downloadFile(file.id, file.name)" />
-                <v-btn v-if="canUploadFile()" icon="mdi-delete" color="error" variant="text" @click="deleteFile(file.id)" />
+                <v-btn v-if="canUploadFile()" icon="mdi-delete" color="error" variant="text"
+                  @click="deleteFile(file.id)" />
               </td>
             </tr>
           </tbody>
@@ -217,6 +221,7 @@ const snackbarMessage = ref("");
 const snackbarColor = ref<"success" | "error">("success");
 
 const isUploading = ref(false);
+const isPublic = ref(true)
 
 function showSnackbar(message: string, color: "success" | "error" = "success") {
   snackbarMessage.value = message;
@@ -384,8 +389,8 @@ async function uploadFiles() {
       await uploadProjectFile(
         file,
         Number(props.project.id),
-        1, // TODO: заменить на текущего пользователя
-        true
+        user.value?.id || 1,
+        isPublic.value
       );
     }
     projectFiles.value = await getProjectFiles(Number(props.project.id));
@@ -432,3 +437,9 @@ async function removeMember(memberId: number) {
   }
 }
 </script>
+
+<style>
+.formatted-text {
+  white-space: pre-wrap; /* переносы строк сохраняются */
+}
+</style>
