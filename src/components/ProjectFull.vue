@@ -94,7 +94,7 @@
         </v-list-item>
       </v-list>
 
-      <v-card-actions>
+      <v-card-actions v-if="canAddMember()">
         <v-spacer />
         <v-btn color="primary" @click="inviteDialog = true">Пригласить</v-btn>
       </v-card-actions>
@@ -111,14 +111,14 @@
             Добавлен {{ new Date(rel.created_at).toLocaleDateString() }}
           </v-list-item-subtitle>
           <template v-slot:append>
-            <v-btn icon="mdi-delete" color="error" variant="text" @click.stop="
+            <v-btn v-if="canRemoveConnection()" icon="mdi-delete" color="error" variant="text" @click.stop="
               removeConnection(rel.project_id, rel.related_project_id)
               " />
           </template>
         </v-list-item>
       </v-list>
 
-      <v-card-actions>
+      <v-card-actions v-if="canRemoveConnection()">
         <v-spacer />
         <v-btn color="primary" @click="connectionDialog = true">
           Добавить связь
@@ -244,6 +244,19 @@ function canRemove(userId: number): boolean {
   if (!currentRole.value) return false;
   if (currentRole.value === "участник") return userId === user.value?.id;
   return true; // куратор или ответственный
+}
+
+function canAddMember(): boolean {
+  if (isAdmin.value) return true;
+  if (!currentRole.value) return false;
+  if (currentRole.value === "участник") return false;
+  return true; // куратор или ответственный
+}
+
+function canRemoveConnection(): boolean {
+  if (isAdmin.value) return true;
+  if (!currentRole.value) return false;
+  return true; // участник проекта
 }
 
 function canChangeRole(userId: number): boolean {
